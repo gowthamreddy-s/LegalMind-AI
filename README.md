@@ -13,7 +13,7 @@ Built with LangChain, ChromaDB, Hugging Face Embeddings, Groq LLMs, and Streamli
 ## 🚀 Live Demo
 
 **Streamlit App:**  
-https://YOUR-STREAMLIT-APP-URL.streamlit.app
+https://multiformat-rag-intelligence.streamlit.app
 
 ---
 
@@ -110,10 +110,10 @@ Answer + Citations + Confidence Score
 
 | Technology | Purpose |
 |------------|----------|
-| Python | Core programming language |
+| Python 3.11 | Core programming language |
 | Streamlit | Web application framework |
-| LangChain | RAG orchestration |
-| Groq | LLM inference |
+| LangChain | RAG pipeline framework |
+| Groq | LLM inference (Llama 3.1) |
 | ChromaDB | Vector database |
 | Hugging Face Embeddings | Semantic embeddings |
 | BAAI/bge-small-en-v1.5 | Embedding model |
@@ -121,6 +121,20 @@ Answer + Citations + Confidence Score
 | BeautifulSoup | HTML parsing |
 | Docx2txt | Word document extraction |
 | Python Dotenv | Environment management |
+| docx2txt, pypdf | File parsing |
+
+---
+
+## 🚀 Deployment
+
+This application is deployed using **Streamlit Community Cloud**.
+
+### 📌 Deployment Steps:
+
+- Connected GitHub repository to Streamlit Cloud  
+- Configured **Streamlit Secrets** for secure API key storage (`GROQ_API_KEY`)  
+- Enabled **auto-deployment** from the `main` branch  
+- Every push to GitHub automatically updates the live app
 
 ---
 
