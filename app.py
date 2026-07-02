@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from groq import Groq as GroqClient
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma 
+from langchain_chroma import Chroma
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 from langchain_qdrant import QdrantVectorStore
@@ -21,36 +21,35 @@ from supabase import create_client, Client
 
 load_dotenv()
 
-# ── Qdrant client ────────────────────────────────────────────────────
-@st.cache_resource
-def get_qdrant_client():
-    return QdrantClient(
-        url=os.getenv("QDRANT_URL"),
-        api_key=os.getenv("QDRANT_API_KEY"),
-    )
-
-qdrant_client = get_qdrant_client()
-
-# ── Supabase client ──────────────────────────────────────────────────
-@st.cache_resource
-def get_supabase() -> Client:
-    url  = os.getenv("SUPABASE_URL")
-    key  = os.getenv("SUPABASE_ANON_KEY")
-    return create_client(url, key)
-
-supabase = get_supabase()
-
-# Stop Streamlit from watching heavy ML folders
-import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-# ── Page config ─────────────────────────────────────────────────────
+# ── Page config — MUST BE FIRST STREAMLIT COMMAND ──────────────────
 st.set_page_config(
     page_title="LegalMind AI — Legal Document Intelligence",
     page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ── Qdrant client ───────────────────────────────────────────────────
+@st.cache_resource
+def get_qdrant_client():
+    return QdrantClient(
+        url=os.getenv("QDRANT_URL"),
+        api_key=os.getenv("QDRANT_API_KEY"),
+        timeout=120,
+    )
+
+qdrant_client = get_qdrant_client()
+
+# ── Supabase client ─────────────────────────────────────────────────
+@st.cache_resource
+def get_supabase() -> Client:
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_ANON_KEY")
+    return create_client(url, key)
+
+supabase = get_supabase()
 
 # ── CSS (keep your existing style, just update colors/name) ─────────
 st.markdown("""
