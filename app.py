@@ -754,7 +754,7 @@ if mode == "chat":
         docs   = [d for d, _ in filtered]
         scores = [to_confidence(s) for _, s in filtered]
         avg    = round(sum(scores) / len(scores), 1) if scores else 0
-        print(f"Sample metadata: {docs[0].metadata if docs else 'no docs'}")
+        
         confidence_bar(avg)
         if avg < 25:
             st.warning("⚠️ Low confidence — this topic may not be in the document.")
