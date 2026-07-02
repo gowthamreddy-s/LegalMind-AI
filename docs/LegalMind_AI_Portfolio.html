@@ -366,6 +366,11 @@
     .steps-grid { grid-template-columns: repeat(3, 1fr); }
     .nav-links { display: none; }
   }
+  @media print {
+  nav { display: none !important; }
+  body { padding-top: 0 !important; }
+  section { page-break-inside: avoid; }
+}
 </style>
 </head>
 <body>
