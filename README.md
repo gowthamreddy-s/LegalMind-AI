@@ -1,19 +1,19 @@
-# 🧠 DocuMind AI — Multi-Format RAG Document Assistant
+# ⚖️ LegalMind AI — RAG-Based Legal Document Intelligence
 
 ## 📌 Overview
 
-DocuMind AI is an intelligent Retrieval-Augmented Generation (RAG) application that allows users to upload documents and interact with them using natural language.
+LegalMind AI is a production-grade **Retrieval-Augmented Generation (RAG)** platform built specifically for Indian advocates and law firms.
 
-The application supports multiple document formats including PDFs, Word documents, spreadsheets, HTML files, text files, and images. Uploaded content is processed, embedded, stored in a vector database, and retrieved through semantic search to generate accurate, source-grounded responses.
+It allows lawyers to upload legal documents — contracts, agreements, property deeds, court notices — and interact with them through natural language chat, auto-generated FAQs, and multi-document comparison.
 
-Built with LangChain, ChromaDB, Hugging Face Embeddings, Groq LLMs, and Streamlit, DocuMind AI provides fast, citation-based answers with confidence scoring and real-time response streaming.
+Every answer is generated **strictly from the uploaded document content** with page-level citations — zero hallucination, zero external knowledge. Built with LangChain, Qdrant Cloud, Supabase Auth, Groq LLMs, and Streamlit.
 
 ---
 
 ## 🚀 Live Demo
 
 **Streamlit App:**  
-https://multiformat-rag-intelligence.streamlit.app
+*Coming soon — deployment in progress*
 
 ---
 
@@ -22,38 +22,61 @@ https://multiformat-rag-intelligence.streamlit.app
 ### 📂 Multi-Format Document Support
 - PDF (.pdf)
 - Word (.docx, .doc)
-- Text (.txt)
-- Markdown (.md)
+- Text (.txt, .md)
 - CSV (.csv)
 - Excel (.xlsx, .xls)
 - HTML (.html, .htm)
 - Images (.png, .jpg, .jpeg, .webp)
 
-### 🔍 Intelligent Retrieval-Augmented Generation (RAG)
-- Automatic document chunking
-- Semantic embeddings using BGE Small
-- ChromaDB vector storage
-- Similarity-based retrieval
-- Context-aware question answering
-- Source-grounded responses
+### 💬 Chat with Documents (Strict RAG)
+- Ask questions in natural language
+- Answers come **only** from uploaded documents
+- Page-level source citations on every answer
+- Retrieval confidence scoring (Strong / Moderate / Low)
+- Per-document persistent chat history
+- Real-time response streaming
 
-### 🖼️ Vision AI for Images
-- Reads screenshots, charts, diagrams, and scanned documents
-- Extracts visible text and visual information
-- Converts image content into searchable knowledge
+### ❓ Auto FAQ Generation
+- Generates 6 FAQs automatically after upload
+- Adapts to document type (contract, policy, report, legal notice)
+- FAQs saved per document — regenerate anytime
+- Strictly based on document content only
+
+### 🔍 Multi-Document Comparison
+- Compare 2–5 documents simultaneously
+- Full structured analysis:
+  - Executive Summary
+  - Document A Overview
+  - Document B Overview
+  - Similarities
+  - Differences
+  - Key Findings
+  - Conclusion
+- Specific question mode — ask targeted comparison questions
+- Previous comparison results saved per session
+
+### 📂 Private Document Library
+- Each user gets their own isolated document library
+- Documents persist across sessions
+- Upload once — access forever
+- Permanent delete with full cleanup
+
+### 🔒 User Authentication
+- Secure email + password login via Supabase Auth
+- Each advocate sees only their own documents
+- Row Level Security enforced
+- Session management with logout
 
 ### 📊 Confidence-Based Retrieval
-- Query rewriting for improved search accuracy
-- Retrieval confidence scoring
-- Strong / Moderate / Weak confidence indicators
-- Source chunk inspection
+- Retrieval confidence score on every answer
+- Junk chunk filtering during ingestion and retrieval
+- Source chunk inspection toggle
+- Warning shown for low confidence answers
 
-### 💬 Interactive Chat Experience
-- Real-time response streaming
-- Session-based conversation memory
-- Source citations
-- Modern Streamlit interface
-- Document information dashboard
+### 🖼️ Vision AI for Images
+- Reads screenshots, charts, scanned documents
+- Extracts all visible text and visual information
+- Converts image content into searchable knowledge
 
 ---
 
@@ -61,67 +84,75 @@ https://multiformat-rag-intelligence.streamlit.app
 
 ### Key Components
 
-- **Document Processing Layer** – Extracts content from PDFs, Word documents, spreadsheets, HTML files, text files, and images.
-- **Embedding Layer** – Converts document chunks into vector embeddings using BAAI/bge-small-en-v1.5.
-- **Vector Database** – Stores embeddings in ChromaDB for efficient semantic retrieval.
-- **Retrieval Layer** – Rewrites user queries and retrieves the most relevant document chunks.
-- **Generation Layer** – Uses Groq Llama models to generate context-aware answers with source citations.
+- **Auth Layer** — Supabase Auth with per-user data isolation
+- **Document Processing Layer** — Extracts content from all file types
+- **Embedding Layer** — BAAI/bge-small-en-v1.5 via HuggingFace
+- **Vector Database** — Qdrant Cloud (per-document collections)
+- **Retrieval Layer** — Semantic search with junk chunk filtering
+- **Generation Layer** — Groq Llama 3.1 70B with strict RAG prompt
+- **Library Layer** — Per-user JSON document registry
 
 ### RAG Pipeline Flow
 
 ```text
-User Uploads Document
+User Login (Supabase Auth)
          │
          ▼
-Document Processing
+Upload Document
 (PDF, Word, CSV, Excel, HTML, Images)
          │
          ▼
-Text Chunking
+Text Extraction
          │
          ▼
-Embeddings Generation
+Chunking + Junk Filtering
+(500 tokens, 50 overlap)
+         │
+         ▼
+BGE Embeddings Generation
 (BAAI/bge-small-en-v1.5)
          │
          ▼
-ChromaDB Vector Store
+Qdrant Cloud Vector Store
+(per-document collection)
          │
          ▼
 User Question
          │
          ▼
-Query Rewriting
+Semantic Similarity Search
+(top-16 → filter → top-8)
          │
          ▼
-Similarity Search
+Strict RAG Prompt
+(no external knowledge allowed)
          │
          ▼
-Relevant Chunks Retrieved
+Groq Llama 3.1 70B
          │
          ▼
-Groq Llama Model
-         │
-         ▼
-Answer + Citations + Confidence Score
+Answer + Page Citations + Confidence Score
 ```
+
 ---
 
 ## 🛠️ Tech Stack
 
 | Technology | Purpose |
-|------------|----------|
+|------------|---------|
 | Python 3.11 | Core programming language |
 | Streamlit | Web application framework |
 | LangChain | RAG pipeline framework |
-| Groq | LLM inference (Llama 3.1) |
-| ChromaDB | Vector database |
-| Hugging Face Embeddings | Semantic embeddings |
+| Groq | LLM inference (llama-3.1-70b-versatile) |
+| Qdrant Cloud | Cloud vector database |
+| Supabase | User authentication + Row Level Security |
+| HuggingFace Embeddings | Semantic embeddings |
 | BAAI/bge-small-en-v1.5 | Embedding model |
-| Pandas | Excel processing |
+| Pandas | Excel/CSV processing |
 | BeautifulSoup | HTML parsing |
 | Docx2txt | Word document extraction |
+| fpdf2 | PDF generation |
 | Python Dotenv | Environment management |
-| docx2txt, pypdf | File parsing |
 
 ---
 
@@ -129,11 +160,11 @@ Answer + Citations + Confidence Score
 
 This application is deployed using **Streamlit Community Cloud**.
 
-### 📌 Deployment Steps:
+### 📌 Deployment Steps
 
-- Connected GitHub repository to Streamlit Cloud  
-- Configured **Streamlit Secrets** for secure API key storage (`GROQ_API_KEY`)  
-- Enabled **auto-deployment** from the `main` branch  
+- Connected GitHub repository to Streamlit Cloud
+- Configured **Streamlit Secrets** for secure API key storage
+- Enabled **auto-deployment** from the `main` branch
 - Every push to GitHub automatically updates the live app
 
 ---
@@ -141,18 +172,24 @@ This application is deployed using **Streamlit Community Cloud**.
 ## 📂 Project Structure
 
 ```text
-DocuMind-AI/
+LegalMind-AI/
 │
-├── app.py               # Main Streamlit application and RAG workflow
-├── ingest.py            # Document ingestion and vector database creation
-├── requirements.txt     # Project dependencies
-├── README.md            # Project documentation
-├── .gitignore           # Excludes sensitive and generated files
-├── .env                 # Environment variables (not committed)
+├── app.py                  # Main Streamlit application and RAG workflow
+├── ingest.py               # CLI document ingestion script (optional)
+├── requirements.txt        # Project dependencies
+├── README.md               # Project documentation
+├── .gitignore              # Excludes sensitive and generated files
+├── .env                    # Environment variables (not committed)
 │
-├── uploads/             # Temporary uploaded documents
+├── .streamlit/
+│   └── config.toml         # Streamlit configuration
 │
-└── chroma_db/           # Persistent ChromaDB vector storage
+├── docs/
+│   ├── LegalMind_AI_Documentation.html   # Full technical documentation
+│   ├── LegalMind_AI_Report.html          # Project portfolio page
+│   └── LegalMind_AI_Pitch.md             # Short project pitch
+│
+└── uploads/                # Temporary uploaded documents (auto-created)
 ```
 
 ---
@@ -162,8 +199,8 @@ DocuMind-AI/
 ### Clone Repository
 
 ```bash
-git clone <repository-url>
-cd DocuMind-AI
+git clone https://github.com/gowthamreddy-s/LegalMind-AI.git
+cd LegalMind-AI
 ```
 
 ### Create Virtual Environment
@@ -175,13 +212,11 @@ python -m venv venv
 ### Activate Environment
 
 **Windows**
-
 ```bash
 venv\Scripts\activate
 ```
 
 **Mac/Linux**
-
 ```bash
 source venv/bin/activate
 ```
@@ -198,6 +233,44 @@ Create a `.env` file:
 
 ```env
 GROQ_API_KEY=your_groq_api_key
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+QDRANT_URL=your_qdrant_cluster_url
+QDRANT_API_KEY=your_qdrant_api_key
+```
+
+### Supabase Setup
+
+Run this SQL in your Supabase SQL Editor:
+
+```
+sql
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT NOT NULL,
+    full_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile"
+    ON public.profiles FOR SELECT
+    USING (auth.uid() = id);
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, email, full_name)
+    VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
 
 ### Run Application
@@ -211,7 +284,7 @@ streamlit run app.py
 ## 📄 Supported File Types
 
 | Category | Extensions |
-|-----------|-----------|
+|----------|-----------|
 | PDF | .pdf |
 | Word | .docx, .doc |
 | Text | .txt, .md |
@@ -224,49 +297,54 @@ streamlit run app.py
 
 ## 🔄 Workflow
 
-1. Upload a document through the interface
-2. Content is extracted and processed
-3. Text is split into semantic chunks
-4. Chunks are converted into vector embeddings
-5. Embeddings are stored in ChromaDB
-6. User submits a question
-7. Query is rewritten for better retrieval
-8. Relevant chunks are retrieved
-9. Context is sent to Groq LLM
-10. Response is generated with citations and confidence scores
+1. User signs up / logs in via Supabase Auth
+2. Upload a legal document through the sidebar
+3. Click Index Document — text extracted, chunked, embedded
+4. Vectors stored in Qdrant Cloud (per-document collection)
+5. Select document from library — chat, FAQ, or compare
+6. Ask a question — semantic search retrieves top chunks
+7. Strict RAG prompt sent to Groq Llama 3.1 70B
+8. Answer streamed with page citations and confidence score
 
 ---
 
 ## 🎯 Key Capabilities
 
-- Retrieval-Augmented Generation (RAG)
-- Semantic Search
-- Document Question Answering
-- Multi-Format File Processing
+- Strict Retrieval-Augmented Generation (RAG)
+- Zero Hallucination Architecture
+- Per-User Document Isolation
+- Semantic Vector Search (Qdrant Cloud)
+- Multi-Document Comparison
+- Auto FAQ Generation
 - Vision-Based Document Understanding
-- Source Attribution
+- Source Attribution with Page Citations
 - Confidence Scoring
 - Real-Time Streaming Responses
+- Persistent Chat History per Document
 
 ---
 
 ## 🔒 Security
 
-- API keys managed using environment variables
+- API keys managed via environment variables and Streamlit Secrets
+- Supabase Row Level Security — users see only their own data
+- Per-user document library isolation
 - Sensitive credentials excluded via `.gitignore`
-- No hardcoded secrets
+- No hardcoded secrets anywhere
 
 ---
 
-## 🚀 Future Enhancements
+## 🚀 Production Roadmap
 
-- Persistent chat memory
-- Hybrid Search (BM25 + Vector Search)
-- Web Search Integration
-- Agentic RAG Workflows
-- LangGraph Integration
-- User Authentication
-- Cloud Vector Database Support
+- [ ] Hybrid Search (BM25 + Semantic Vector Search)
+- [ ] FastAPI backend
+- [ ] Next.js + React frontend
+- [ ] OpenAI GPT-4o integration
+- [ ] AWS S3 file storage
+- [ ] Razorpay payment integration
+- [ ] Mobile app
+- [ ] Indian legal corpus fine-tuning
+- [ ] Multi-language support (Hindi, Telugu, Tamil)
 
 ---
 
@@ -274,15 +352,26 @@ streamlit run app.py
 
 **Through this project, I gained practical experience in:**
 
-- Building end-to-end Retrieval-Augmented Generation (RAG) applications.
-- Implementing semantic search using vector embeddings and ChromaDB.
-- Working with LangChain components such as document loaders, text splitters, prompts, and LCEL chains.
-- Integrating Groq LLMs for fast inference and response generation.
-- Processing multiple document formats including PDFs, Word files, spreadsheets, HTML pages, and images.
-- Implementing query rewriting and confidence-based retrieval.
-- Developing interactive AI applications using Streamlit.
-- Managing embeddings, vector databases, and document retrieval pipelines.
-- Deploying production-ready AI applications on Streamlit Cloud.
+- Building production-grade RAG applications for legal domain
+- Implementing strict no-hallucination RAG architecture
+- Integrating Qdrant Cloud for scalable vector storage
+- Implementing per-user data isolation with Supabase Auth
+- Building multi-document comparison pipelines
+- Working with LangChain — loaders, splitters, prompts, LCEL chains
+- Integrating Groq LLMs for fast inference and streaming
+- Processing multiple document formats including images via Vision AI
+- Implementing confidence-based retrieval with junk chunk filtering
+- Deploying production AI applications on Streamlit Cloud
+
+---
+
+## 📖 Documentation
+
+Full technical documentation available in the `docs/` folder:
+
+- `LegalMind_AI_Documentation.html` — Complete technical documentation
+- `LegalMind_AI_Report.html` — Project portfolio and showcase
+- `LegalMind_AI_Pitch.md` — Short project pitch
 
 ---
 
@@ -290,11 +379,10 @@ streamlit run app.py
 
 **Gowtham Reddy S**
 
-MSc Data Science | AI/ML Engineer | Generative AI & Agentic AI Enthusiast
+MSc Data Science | AI Engineer | Generative AI & Legal Tech
 
 **LinkedIn:** https://www.linkedin.com/in/gowtham-reddy-s-9797a625a
 
 ---
 
 ⭐ If you found this project useful, consider giving it a star.
-
