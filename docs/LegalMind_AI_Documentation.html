@@ -324,6 +324,7 @@
     <div class="nav-group-label">Roadmap</div>
     <a href="#production" class="nav-link">Production Upgrade</a>
     <a href="#changelog" class="nav-link">Changelog</a>
+    <a href="#deployment" class="nav-link">Deployment Guide</a>
   </div>
 </nav>
 
@@ -551,9 +552,9 @@
         </tr>
         <tr>
           <td>Vector DB</td>
-          <td><span class="tag tag-blue">ChromaDB</span></td>
-          <td>0.5.3</td>
-          <td>Local vector storage and similarity search</td>
+          <td><span class="tag tag-green">Qdrant Cloud</span></td>
+          <td>1.18.0</td>
+          <td>Cloud vector storage — persistent, scalable, per-document collections</td>
         </tr>
         <tr>
           <td>Auth</td>
@@ -1358,9 +1359,9 @@ SOURCES:
         <tr>
           <td>1</td>
           <td>Vector DB</td>
-          <td>ChromaDB local</td>
-          <td>Qdrant Cloud</td>
-          <td>Persistent, scalable, hybrid search</td>
+          <td><span class="tag tag-green">✅ Qdrant Cloud</span></td>
+          <td>Qdrant Cloud Pro</td>
+          <td>✅ Done — persistent, scalable, cloud hosted</td>
         </tr>
         <tr>
           <td>2</td>
@@ -1439,26 +1440,141 @@ SOURCES:
       <li><span class="status-done">✅ ADDED</span> — Supabase Auth (email + password)</li>
       <li><span class="status-done">✅ ADDED</span> — Junk chunk filtering during ingestion and retrieval</li>
       <li><span class="status-done">✅ ADDED</span> — Permanent document delete</li>
-      <li><span class="status-done">✅ ADDED</span> — Deployed on Streamlit Cloud</li>
+      <li><span class="status-done">✅ ADDED</span> — Per-document chat history delete (💬 button)</li>
+      <li><span class="status-done">✅ ADDED</span> — Confidence threshold lowered to 25%</li>
+      <li><span class="status-done">✅ ADDED</span> — Previous comparison result saved per session</li>
     </ul>
 
-    <h2>v1.1 — Planned</h2>
+    <h2>v1.1 — Completed (June 2026)</h2>
     <ul>
-      <li><span class="status-progress">🔄 IN PROGRESS</span> — Qdrant Cloud migration</li>
+      <li><span class="status-done">✅ DONE</span> — Qdrant Cloud migration (replaced ChromaDB)</li>
+      <li><span class="status-done">✅ DONE</span> — Batch ingestion with retry logic (batch 10, 3 retries, 120s timeout)</li>
+      <li><span class="status-done">✅ DONE</span> — Page numbers stored correctly in Qdrant payload</li>
+      <li><span class="status-done">✅ DONE</span> — Page citations showing correctly in chat answers</li>
+      <li><span class="status-done">✅ DONE</span> — Deployed on Streamlit Cloud — legalmind-ai-app.streamlit.app</li>
+      <li><span class="status-done">✅ DONE</span> — GitHub repo renamed to LegalMind-AI (private)</li>
+      <li><span class="status-done">✅ DONE</span> — st.set_page_config moved to first Streamlit command</li>
+      <li><span class="status-done">✅ DONE</span> — Technical documentation created</li>
+      <li><span class="status-done">✅ DONE</span> — Project portfolio / pitch deck with screenshots created</li>
+      <li><span class="status-done">✅ DONE</span> — Demo video recorded</li>
+      <li><span class="status-done">✅ DONE</span> — README updated with full project details</li>
+    </ul>
+
+    <h2>v1.2 — Planned</h2>
+    <ul>
       <li><span class="status-planned">⏳ PLANNED</span> — Hybrid search (semantic + BM25)</li>
       <li><span class="status-planned">⏳ PLANNED</span> — PDF download of chat history</li>
-      <li><span class="status-planned">⏳ PLANNED</span> — FastAPI backend</li>
       <li><span class="status-planned">⏳ PLANNED</span> — OpenAI GPT-4o integration</li>
+      <li><span class="status-planned">⏳ PLANNED</span> — OpenAI text-embedding-3 upgrade</li>
     </ul>
 
     <h2>v2.0 — Future</h2>
     <ul>
+      <li><span class="status-planned">⏳ PLANNED</span> — FastAPI backend</li>
       <li><span class="status-planned">⏳ PLANNED</span> — Next.js + React frontend</li>
       <li><span class="status-planned">⏳ PLANNED</span> — Razorpay payment integration</li>
       <li><span class="status-planned">⏳ PLANNED</span> — Mobile app</li>
-      <li><span class="status-planned">⏳ PLANNED</span> — Indian legal corpus fine-tuning</li>
       <li><span class="status-planned">⏳ PLANNED</span> — Multi-language support (Hindi, Telugu, Tamil)</li>
     </ul>
+  </div>
+
+  <!-- DEPLOYMENT -->
+  <div class="doc-section" id="deployment">
+    <div class="section-eyebrow">Deployment</div>
+    <h1>Deploying to Streamlit Cloud</h1>
+
+    <div class="callout callout-success">
+      <strong>Live URL</strong>
+      https://legalmind-ai-app.streamlit.app
+    </div>
+
+    <h2>Prerequisites</h2>
+    <ul>
+      <li>GitHub account with <code>LegalMind-AI</code> repo pushed</li>
+      <li>All 6 API keys ready (Groq, Supabase x3, Qdrant x2)</li>
+      <li><code>requirements.txt</code> updated with all packages</li>
+      <li><code>runtime.txt</code> containing <code>python-3.11</code></li>
+    </ul>
+
+    <h2>Step by step</h2>
+    <ol class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Go to Streamlit Cloud</h4>
+          <p>Visit <code>https://share.streamlit.io</code> and login with your GitHub account.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Create new app</h4>
+          <p>Click <strong>New app</strong> → <strong>From existing repo</strong></p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Fill deployment form</h4>
+          <pre><code>Repository  → https://github.com/gowthamreddy-s/LegalMind-AI
+Branch      → main
+Main file   → app.py
+App URL     → legalmind-ai-app</code></pre>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Add secrets — click Advanced settings before deploying</h4>
+          <pre><code>GROQ_API_KEY = "your_groq_key"
+SUPABASE_URL = "https://your-project.supabase.co"
+SUPABASE_ANON_KEY = "your_anon_key"
+SUPABASE_SERVICE_KEY = "your_service_key"
+QDRANT_URL = "https://your-cluster.qdrant.io"
+QDRANT_API_KEY = "your_qdrant_key"</code></pre>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h4>Click Deploy</h4>
+          <p>Wait 3–5 minutes. Embedding model downloads on first run (~133MB). Subsequent deploys are faster.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <h4>Verify</h4>
+          <p>Open app URL → login page appears → sign up → upload PDF → test chat.</p>
+        </div>
+      </li>
+    </ol>
+
+    <h2>Auto-deployment (CI/CD)</h2>
+    <p>Every push to <code>main</code> branch automatically triggers redeploy on Streamlit Cloud.</p>
+    <pre><code>git add .
+git commit -m "your changes"
+git push origin main</code></pre>
+
+    <div class="callout callout-warning">
+      <strong>Critical — st.set_page_config must be first</strong>
+      <code>st.set_page_config()</code> must be the very first Streamlit command in <code>app.py</code>
+      — before any <code>st.</code> calls including cached resources. Violating this causes deployment crash.
+    </div>
+
+    <div class="callout callout-danger">
+      <strong>Never commit .env file</strong>
+      Add API keys via Streamlit Cloud Secrets only. Never hardcode in source code.
+    </div>
+
+    <div class="callout callout-info">
+      <strong>First run is slow</strong>
+      HuggingFace BGE model (133MB) downloads on first deployment. App takes 3–5 minutes to stabilize.
+      Subsequent visits load instantly from cache.
+    </div>
+
+    <h2>If app shows error after push</h2>
+    <p>Streamlit Cloud dashboard → click <strong>⋮ three dots</strong> → <strong>Reboot app</strong></p>
   </div>
 
 </main>
