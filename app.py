@@ -202,11 +202,6 @@ current_user_id = current_user.id
 current_email   = current_user.email
 
 # ── Constants ────────────────────────────────────────────────────────
-def get_library_file():
-    user_id = st.session_state.get("user", {})
-    if hasattr(user_id, "id"):
-        return f"library_{user_id.id}.json"
-    return "doc_library.json"
 CHROMA_DIR   = "chroma_db"
 UPLOAD_DIR   = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -221,43 +216,68 @@ SUPPORTED_TYPES = {
     "jpeg":"🖼️ Image","webp":"🖼️ Image",
 }
 
-# ── Document Library (JSON file = simple, no extra DB needed) ────────
+# ── Document Library (Supabase PostgreSQL)  ────────
 def load_library() -> dict:
-    lib_file = get_library_file()
-    if os.path.exists(lib_file):
-        with open(lib_file, "r") as f:
-            return json.load(f)
-    return {}
+    try:
+        user = st.session_state.get("user")
+        if not user:
+            return {}
+        result = supabase.table("documents")\
+            .select("*")\
+            .eq("user_id", user.id)\
+            .execute()
+        lib = {}
+        for doc in result.data:
+            lib[doc["id"]] = {
+                "id": doc["id"],
+                "name": doc["name"],
+                "file_type": doc["file_type"],
+                "chunk_count": doc["chunk_count"],
+                "page_count": doc["page_count"],
+                "collection_name": doc["collection_name"],
+                "uploaded_at": doc["uploaded_at"],
+                "faqs": doc["faqs"] or []
+            }
+        return lib
+    except Exception as e:
+        print(f"Error loading library: {e}")
+        return {}
 
 def save_library(lib: dict):
-    lib_file = get_library_file()
-    with open(lib_file, "w") as f:
-        json.dump(lib, f, indent=2)
+    pass  # Now handled by Supabase directly
 
 def add_to_library(doc_id, name, file_type, chunk_count, page_count, collection_name):
-    lib = load_library()
-    lib[doc_id] = {
-        "id": doc_id,
-        "name": name,
-        "file_type": file_type,
-        "chunk_count": chunk_count,
-        "page_count": page_count,
-        "collection_name": collection_name,
-        "uploaded_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-        "faqs": []
-    }
-    save_library(lib)
+    try:
+        user = st.session_state.get("user")
+        if not user:
+            return
+        supabase.table("documents").insert({
+            "id": doc_id,
+            "user_id": user.id,
+            "name": name,
+            "file_type": file_type,
+            "chunk_count": chunk_count,
+            "page_count": page_count,
+            "collection_name": collection_name,
+        }).execute()
+    except Exception as e:
+        print(f"Error adding to library: {e}")
 
 def delete_from_library(doc_id):
-    lib = load_library()
-    if doc_id in lib:
-        col_name = lib[doc_id]["collection_name"]
-        try:
-            qdrant_client.delete_collection(col_name)
-        except Exception:
-            pass
-        del lib[doc_id]
-        save_library(lib)
+    try:
+        lib = load_library()
+        if doc_id in lib:
+            col_name = lib[doc_id]["collection_name"]
+            try:
+                qdrant_client.delete_collection(col_name)
+            except Exception:
+                pass
+        supabase.table("documents")\
+            .delete()\
+            .eq("id", doc_id)\
+            .execute()
+    except Exception as e:
+        print(f"Error deleting: {e}")
 
 # ── Cache resources ──────────────────────────────────────────────────
 @st.cache_resource
@@ -845,9 +865,10 @@ elif mode == "faq":
             st.markdown(f"**{len(saved_faqs)} FAQs generated**")
         with col2:
             if st.button("🔄 Redo", help="Regenerate FAQs"):
-                lib = load_library()
-                lib[active_id]["faqs"] = []
-                save_library(lib)
+                supabase.table("documents")\
+                    .update({"faqs": faqs})\
+                    .eq("id", active_id)\
+                    .execute()
                 st.rerun()
 
         for i, faq in enumerate(saved_faqs):
