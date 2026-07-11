@@ -1,6 +1,7 @@
 import streamlit as st
 import os, base64, uuid, json
 import pandas as pd
+from rank_bm25 import BM25Okapi
 from datetime import datetime
 from dotenv import load_dotenv
 from groq import Groq as GroqClient
@@ -306,7 +307,69 @@ def get_vectorstore(collection_name: str):
         )
     except Exception:
         return None
+def hybrid_search(vs, query: str, k: int = 16) -> list:
+    """
+    Hybrid search combining semantic (Qdrant) + keyword (BM25)
+    Returns top k results ranked by combined score
+    """
+    try:
+        # Step 1 — Semantic search from Qdrant
+        semantic_results = vs.similarity_search_with_score(query, k=k)
 
+        if not semantic_results:
+            return []
+
+        all_docs   = [d for d, _ in semantic_results]
+        all_scores = [s for _, s in semantic_results]
+
+        # Filter junk first
+        clean_pairs = [
+            (d, s) for d, s in zip(all_docs, all_scores)
+            if len(d.page_content.strip()) > 200
+            and len(set(d.page_content.split())) > 20
+        ]
+        if not clean_pairs:
+            clean_pairs = list(zip(all_docs, all_scores))
+
+        docs   = [d for d, s in clean_pairs]
+        scores = [s for d, s in clean_pairs]
+
+        # Step 2 — BM25 keyword search on clean docs only
+        tokenized_docs = [doc.page_content.lower().split() for doc in docs]
+        tokenized_query = query.lower().split()
+
+        bm25 = BM25Okapi(tokenized_docs)
+        bm25_scores = bm25.get_scores(tokenized_query)
+
+        # Step 3 — Normalize both scores 0 to 1
+        # Semantic scores (lower = better in cosine distance, convert to similarity)
+        sem_scores_norm = [max(0, 1 - s) for s in scores]
+
+        # Normalize semantic
+        sem_max = max(sem_scores_norm) if sem_scores_norm else 1
+        sem_min = min(sem_scores_norm) if sem_scores_norm else 0
+        sem_range = sem_max - sem_min if sem_max != sem_min else 1
+        sem_normalized = [(s - sem_min) / sem_range for s in sem_scores_norm]
+
+        # Normalize BM25
+        bm25_max = max(bm25_scores) if max(bm25_scores) > 0 else 1
+        bm25_normalized = [s / bm25_max for s in bm25_scores]
+
+        # Step 4 — Combine scores (60% semantic + 40% keyword)
+        combined = []
+        for i, doc in enumerate(docs):
+            hybrid_score = (0.6 * sem_normalized[i]) + (0.4 * bm25_normalized[i])
+            combined.append((doc, hybrid_score))
+
+        # Step 5 — Sort by combined score (higher = better)
+        combined.sort(key=lambda x: x[1], reverse=True)
+        return combined
+
+    except Exception as e:
+        print(f"Hybrid search error: {e}")
+        # Fallback to semantic only
+        return vs.similarity_search_with_score(query, k=k)
+    
 embedder = load_embedder()
 llm      = load_llm()
 groq_raw = GroqClient(api_key=os.getenv("GROQ_API_KEY"))
@@ -364,6 +427,17 @@ def load_document(file_path):
     else:
         return TextLoader(file_path, encoding="utf-8").load()
 
+def _is_junk_chunk(text: str) -> bool:
+    """Detect repeated/junk chunks from any PDF"""
+    words = text.lower().split()
+    if len(words) == 0:
+        return True
+    # If more than 40% words are repeated it's a junk chunk
+    unique_words = set(words)
+    repetition_ratio = 1 - (len(unique_words) / len(words))
+    if repetition_ratio > 0.4:
+        return True
+    return False
 
 # ── Ingest into named collection ─────────────────────────────────────
 def ingest_file(file_path, original_name):
@@ -381,12 +455,15 @@ def ingest_file(file_path, original_name):
         separators=["\n\n", "\n", ". ", " ", ""]
     ).split_documents(docs)
 
-    # Filter junk chunks
+    # Filter junk chunks during ingestion
     chunks = [
         c for c in raw_chunks
-        if len(c.page_content.strip()) > 100
-        and len(set(c.page_content.split())) > 10
+        if len(c.page_content.strip()) > 200
+        and len(set(c.page_content.split())) > 25
+        and not _is_junk_chunk(c.page_content)
     ]
+    if not chunks:
+        chunks = raw_chunks  # fallback if all filtered
 
     print(f"   Total chunks after filter: {len(chunks)}")
 
@@ -687,7 +764,7 @@ st.markdown("""
     ⚖️ LegalMind AI
   </h1>
   <p style="color:rgba(255,255,255,0.7);margin:0.3rem 0 0;font-size:0.88rem">
-    Strict RAG · Answers only from your documents · No hallucination
+    Citation-verified · Confidence-scored · Human-review-required
   </p>
 </div>
 """, unsafe_allow_html=True)
@@ -757,21 +834,22 @@ if mode == "chat":
             st.markdown(question)
         st.session_state[chat_key].append({"role": "user", "content": question})
 
-        # Retrieve chunks
-        docs_scores = vs.similarity_search_with_score(question, k=16)
+        # Retrieve chunks — hybrid search (semantic + BM25)
+        docs_scores = hybrid_search(vs, question, k=16)
 
         # Filter junk chunks (table headers, repeated legends)
         filtered = [
             (d, s) for d, s in docs_scores
-            if len(d.page_content.strip()) > 150
-            and len(set(d.page_content.split())) > 15
+            if len(d.page_content.strip()) > 200
+            and len(set(d.page_content.split())) > 20
         ]
         if not filtered:
             filtered = docs_scores
         filtered = filtered[:8]
 
         docs   = [d for d, _ in filtered]
-        scores = [to_confidence(s) for _, s in filtered]
+        # Hybrid scores are 0-1, convert to percentage
+        scores = [round(s * 100, 1) for _, s in filtered]
         avg    = round(sum(scores) / len(scores), 1) if scores else 0
         
         confidence_bar(avg)
@@ -844,7 +922,7 @@ SOURCES:
               <span style="font-size:11px;background:#f0fdf4;color:#166534;
                            padding:2px 10px;border-radius:20px">{len(docs)} sources</span>
               <span style="font-size:11px;background:#faf5ff;color:#6b21a8;
-                           padding:2px 10px;border-radius:20px">Strict RAG · No hallucination</span>
+                            padding:2px 10px;border-radius:20px">Citation-verified · Human-review-required</span>
             </div>""", unsafe_allow_html=True)
 
         st.session_state[chat_key].append({"role": "assistant", "content": reply})
@@ -866,7 +944,7 @@ elif mode == "faq":
         with col2:
             if st.button("🔄 Redo", help="Regenerate FAQs"):
                 supabase.table("documents")\
-                    .update({"faqs": faqs})\
+                    .update({"faqs": []})\
                     .eq("id", active_id)\
                     .execute()
                 st.rerun()
@@ -936,10 +1014,11 @@ DOCUMENT:
                             raw_clean = raw_clean[4:]
                     faqs = json.loads(raw_clean.strip())[:6]
 
-                    # Save to library
-                    lib = load_library()
-                    lib[active_id]["faqs"] = faqs
-                    save_library(lib)
+                    # Save to Supabase
+                    supabase.table("documents")\
+                        .update({"faqs": faqs})\
+                        .eq("id", active_id)\
+                        .execute()
                     st.rerun()
 
                 except Exception as e:
@@ -1031,15 +1110,16 @@ Use ONLY document content. No external knowledge."""),
                                 if raw_clean.startswith("json"):
                                     raw_clean = raw_clean[4:]
                             faqs = json.loads(raw_clean.strip())[:4]
-                            lib  = load_library()
-                            lib[doc_id]["faqs"] = faqs
-                            save_library(lib)
+                            supabase.table("documents")\
+                                .update({"faqs": faqs})\
+                                .eq("id", doc_id)\
+                                .execute()
                             st.rerun()
                         except Exception:
                             st.error("Could not generate FAQs.")
 
     # Show previous comparison if exists
-    compare_key = f"compare_result_{active_id}"
+    compare_key = "last_compare_result"
     if compare_key in st.session_state:
         prev = st.session_state[compare_key]
         with st.expander("📊 Previous comparison result", expanded=False):

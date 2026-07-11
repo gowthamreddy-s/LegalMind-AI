@@ -21,3 +21,4 @@ qdrant-client==1.18.0
 langchain-qdrant
 fpdf2
 lxml
+rank-bm25
